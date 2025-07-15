@@ -1,9 +1,33 @@
 const { app, BrowserWindow, dialog, Menu } = require('electron');
 const path = require('path');
 const { autoUpdater } = require('electron-updater');
-const isDev = require('electron-is-dev');
+const fs = require('fs');
 
 let mainWindow;
+
+// Better development detection
+function isDevelopment() {
+  // Check if we're in development mode
+  const isPackaged = app.isPackaged;
+  const hasDevServer = process.env.NODE_ENV === 'development';
+  const hasDistFolder = fs.existsSync(path.join(__dirname, 'dist'));
+  
+  console.log('App isPackaged:', isPackaged);
+  console.log('NODE_ENV:', process.env.NODE_ENV);
+  console.log('Has dist folder:', hasDistFolder);
+  
+  // If app is packaged, it's production
+  if (isPackaged) return false;
+  
+  // If NODE_ENV is development, it's development
+  if (hasDevServer) return true;
+  
+  // If no dist folder exists, assume development
+  if (!hasDistFolder) return true;
+  
+  // Default to production if dist folder exists
+  return false;
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -17,11 +41,10 @@ function createWindow() {
     }
   });
 
-  // Load the app
-  console.log('isDev:', isDev);
-  console.log('NODE_ENV:', process.env.NODE_ENV);
+  const isDev = isDevelopment();
+  console.log('Final isDev decision:', isDev);
   
-  if (isDev || process.env.NODE_ENV === 'development') {
+  if (isDev) {
     console.log('Loading development server...');
     mainWindow.loadURL('http://localhost:5173');
     
@@ -37,7 +60,10 @@ function createWindow() {
     });
   } else {
     console.log('Loading production build...');
-    mainWindow.loadFile(path.join(__dirname, 'dist/index.html'));
+    const indexPath = path.join(__dirname, 'dist', 'index.html');
+    console.log('Loading from:', indexPath);
+    console.log('File exists:', fs.existsSync(indexPath));
+    mainWindow.loadFile(indexPath);
   }
   
   // Add keyboard shortcut to toggle dev tools (F12 or Ctrl+Shift+I)
@@ -122,8 +148,8 @@ app.whenReady().then(() => {
   const menu = Menu.buildFromTemplate(template);
   Menu.setApplicationMenu(menu);
 
-  // Check for updates when app is ready
-  if (!isDev) {
+  // Check for updates when app is ready (only in packaged production mode)
+  if (!isDevelopment() && app.isPackaged) {
     autoUpdater.checkForUpdatesAndNotify();
   }
 
