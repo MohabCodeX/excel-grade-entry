@@ -112,7 +112,8 @@
     "publish": {
       "provider": "github",
       "owner": "MohabCodeX",
-      "repo": "excel-grade-entry"
+      "repo": "excel-grade-entry",
+      "releaseType": "release"
     },
     "win": {
       "target": "nsis",
