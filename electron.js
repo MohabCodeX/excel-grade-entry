@@ -149,8 +149,12 @@ app.whenReady().then(() => {
   Menu.setApplicationMenu(menu);
 
   // Check for updates when app is ready (only in packaged production mode)
-  if (!isDevelopment() && app.isPackaged) {
+  // Disable auto-updater for local development and unpackaged builds
+  if (app.isPackaged && process.env.NODE_ENV !== 'development') {
+    console.log('Checking for updates...');
     autoUpdater.checkForUpdatesAndNotify();
+  } else {
+    console.log('Auto-updater disabled for local development');
   }
 
   app.on('activate', () => {
@@ -198,13 +202,16 @@ autoUpdater.on('update-not-available', (info) => {
 
 autoUpdater.on('error', (err) => {
   console.log('❌ Auto-updater error:', err);
-  dialog.showMessageBox(mainWindow, {
-    type: 'error',
-    title: '⚠️ Update Error',
-    message: 'There was an error checking for updates.\n\n' +
-             'Please check your internet connection and try again later.',
-    buttons: ['OK']
-  });
+  // Only show error dialog in packaged production mode
+  if (app.isPackaged && process.env.NODE_ENV !== 'development') {
+    dialog.showMessageBox(mainWindow, {
+      type: 'error',
+      title: '⚠️ Update Error',
+      message: 'There was an error checking for updates.\n\n' +
+               'Please check your internet connection and try again later.',
+      buttons: ['OK']
+    });
+  }
 });
 
 let progressWindow;
