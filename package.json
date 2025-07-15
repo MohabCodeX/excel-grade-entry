@@ -103,6 +103,7 @@
       "output": "electron-dist",
       "buildResources": "build"
     },
+    "icon": "build/icon.ico",
     "files": [
       "dist/**/*",
       "electron.js",
